@@ -47,42 +47,79 @@ public class MiniCSV {
     return readCSV(fileName, "UTF-8");
   }
 
-  /** Read the CSV fileName with given encoding.
+  /** Read the CSV fileName with given encoding, delimiter = , and quotechar = ".
    * @param fileName The name of CSV file.
    * @param encoding could be "utf-8", "latin1",...
    * @return List with CSV table values
    */
   public static List<List<String>> readCSV(String fileName, String encoding) throws IOException, FileNotFoundException {
+    return readCSV(fileName, encoding, '"', ',');
+  }
+
+  /** Read the CSV fileName with given encoding.
+   * @param fileName The name of CSV file.
+   * @param encoding could be "utf-8", "latin1",...
+   * @param quotechar is the quotechar
+   * @param delimiter is the char used as delimiter
+   * @return List with CSV table values
+   */
+  public static List<List<String>> readCSV(String fileName, String encoding, char quotechar, char delimiter) throws IOException, FileNotFoundException {
     List<List<String>> records = new ArrayList<>();
     try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), encoding))) {
-      String line;
-      while ((line = br.readLine()) != null) {
-        char ch = ' ', previousChar = ' ';
-        boolean quote = false;
-        StringBuffer buffer = new StringBuffer();
-        ArrayList<String> linea = new ArrayList<String>(); 
-        for(int i = 0; i < line.length(); i++) {
+      int nextChar = 0;
+      char ch = ' ', previousChar = ' ';
+      boolean quote = false;
+      ArrayList<String> line = new ArrayList<String>();
+      StringBuffer buffer = new StringBuffer();
+      while (true) {
+        nextChar = br.read();
+        if(nextChar > -1) {
           previousChar = ch;
-          ch = line.charAt(i);
-          if(ch == '"') {
-            if(previousChar == '"') {
+          ch = (char) nextChar;
+          if(quote) {
+            if(ch == quotechar) {
+              if(previousChar == quotechar) {
+                buffer.append(ch);
+                ch = ' ';
+              }
+              quote = false;
+            } else {
               buffer.append(ch);
-              ch = ' ';
             }
-            quote = !quote;
-          } else if(ch == ',' && !quote) {
-            linea.add(buffer.toString());
-            buffer = new StringBuffer();
           } else {
-            buffer.append(ch);
+            if(ch == quotechar) {
+              if(previousChar == quotechar) {
+                buffer.append(ch);
+                ch = ' ';
+              }
+              quote = true;
+            } else if(ch == delimiter) {
+              line.add(buffer.toString());
+              buffer.setLength(0);
+            } else if(ch == '\n') {
+              line.add(buffer.toString());
+              buffer.setLength(0);
+              records.add(line);
+              line = new ArrayList<>();
+            } else if(ch == '\r') {
+              // Ignore it
+            } else {
+              buffer.append(ch);
+            }
           }
+        } else {
+          if(buffer.length() > 0)
+            line.add(buffer.toString());
+          if(line.size() > 0) {
+            records.add(line);
+          }
+          break;
         }
-        linea.add(buffer.toString());
-        records.add(linea);
-      }
+      } 
     }
     return records;
   }
+
 
   /** Writes list to Stream as CSV format.
    * @param rows List with data
@@ -258,6 +295,14 @@ public class MiniCSV {
     System.out.println("Item with id 2: " + map.get(2));
     // Print data
     for(List<String> row : rows) {
+      for(String item : row) 
+        System.out.print(item + "\t");
+      System.out.println();
+    }
+    List<List<String>> rows2 = readCSV("example1.csv", "utf-8", '"', ',');
+    // Print data
+    System.out.println("Reading with specific parameters");
+    for(List<String> row : rows2) {
       for(String item : row) 
         System.out.print(item + "\t");
       System.out.println();
