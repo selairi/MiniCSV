@@ -120,12 +120,13 @@ public class MiniCSV {
     return records;
   }
 
-
   /** Writes list to Stream as CSV format.
    * @param rows List with data
    * @param output stream to write data
+   * @param quotechar CSV file quote
+   * @param delimiter CSV file delimiter
    */
-  public static void writeCSV(List<List<String>> rows, PrintStream out) {
+  public static void writeCSV(List<List<String>> rows, PrintStream out, char quotechar, char delimiter) {
     int maxCols = 0;
     for(List<String> row : rows)
       if(maxCols < row.size()) maxCols = row.size();
@@ -133,17 +134,25 @@ public class MiniCSV {
       for(int n = 0; n < maxCols; n++) {
         if(n < row.size()) {
           String col = row.get(n);
-          boolean quoted = col.contains(",") || col.contains(" ");
-          if(quoted) out.print('"');
-          col = col.replaceAll("\"", "\"\"");
+          boolean quoted = col.contains("" + delimiter) || col.contains(" ") || col.contains("\n");
+          if(quoted) out.print(quotechar);
+          col = col.replaceAll("" + quotechar, quotechar + "" + quotechar);
           out.print(col);
-          if(quoted) out.print('"');
+          if(quoted) out.print(quotechar);
         }
         if(n < (maxCols - 1))
-          out.print(',');
+          out.print(delimiter);
       }
       out.println();
     }
+  }
+
+  /** Writes list to Stream as CSV format.
+   * @param rows List with data
+   * @param output stream to write data
+   */
+  public static void writeCSV(List<List<String>> rows, PrintStream out) {
+    writeCSV(rows, out, '"', ',');
   }
 
   /** Writes data in rows list to fileName with encoding.
@@ -153,7 +162,7 @@ public class MiniCSV {
    */
   public static void writeCSV(List<List<String>> rows, String fileName, String encoding) throws FileNotFoundException,UnsupportedEncodingException {
     PrintStream out = new PrintStream(fileName, encoding);
-    writeCSV(rows, out);
+    writeCSV(rows, out, '"', ',');
     out.close();
   }
 
@@ -169,7 +178,7 @@ public class MiniCSV {
    * @param rows List with data
    */
   public static void print(List<List<String>> rows) {
-    writeCSV(rows, System.out);
+    writeCSV(rows, System.out, '"', ',');
   }
 
   /** Builds a HashMap with "list" data using "idColumn" as key and key duplicates are ignored. idColumn have to be a primary key.
