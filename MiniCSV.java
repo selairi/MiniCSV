@@ -1,5 +1,3 @@
-package scv_backup.app;
-
 import java.util.*;
 import java.io.*;
 
@@ -184,7 +182,10 @@ public class MiniCSV {
    * @param rows List with data
    */
   public static void print(List<List<String>> rows) throws java.io.IOException {
-    writeCSV(rows, new BufferedWriter(new OutputStreamWriter(System.out)), '"', ',');
+    OutputStreamWriter out = new OutputStreamWriter(System.out);
+    BufferedWriter writer = new BufferedWriter(out);
+    writeCSV(rows, writer, '"', ',');
+    writer.close();
   }
 
   /** Builds a HashMap with "list" data using "idColumn" as key and key duplicates are ignored. idColumn have to be a primary key.
